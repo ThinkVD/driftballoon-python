@@ -2,14 +2,14 @@
 
 ## What is DriftBalloon?
 
-DriftBalloon is a log-only LLM output drift detection SDK. It monitors your LLM outputs for semantic and length drift, and can automatically switch to fallback prompts when drift is detected. DriftBalloon stays completely out of the critical path -- developers call `db.log(...).submit()` (fire-and-forget) or `db.log(...).invoke()` (synchronous) after their LLM calls.
+DriftBalloon is a log-only LLM output drift detection SDK. It monitors your LLM outputs for semantic and length drift. DriftBalloon stays completely out of the critical path -- developers call `db.log(...).submit()` (fire-and-forget) or `db.log(...).invoke()` (synchronous) after their LLM calls.
 
 ## When to Use DriftBalloon
 
 Add DriftBalloon when the user wants to:
 - Monitor LLM outputs for quality/consistency
 - Detect when an LLM's behavior changes over time
-- Automatically switch to fallback prompts when drift occurs
+- Check which prompt version is active (configured via the dashboard)
 - Track prompt performance in production
 
 ## Integration Pattern
@@ -86,7 +86,3 @@ When integrating DriftBalloon, look for:
 ### "Drift not detected"
 - Check `get_baseline_status()` - need 30+ samples
 - Verify logging is happening on every call
-
-### "Auto-switch not working"
-- Ensure prompt B is configured in the dashboard
-- Need 3 consecutive drifts to trigger switch

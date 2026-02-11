@@ -36,7 +36,7 @@ active = db.get_active_prompt("support-agent")
 - **Fire-and-forget logging** — `log().submit()` is non-blocking; your app never waits on DriftBalloon
 - **Semantic drift detection** — detects when LLM responses shift meaning or topic
 - **Length drift detection** — catches abnormally short or long responses
-- **Auto-switching** — automatically switches to prompt B when drift is detected
+- **Prompt status tracking** — check which prompt version is active via `get_active_prompt()`
 - **Multi-model support** — track `gpt-4o`, `claude-3-5-sonnet`, or any model string
 - **Local config cache** — prompt configs are cached and synced every 30s
 - **Offline resilience** — your app keeps working if DriftBalloon is unreachable
@@ -86,6 +86,25 @@ Check if the baseline is ready (`"learning"` or `"ready"`) and how many samples 
 ## Documentation
 
 Full docs at [docs.driftballoon.com](https://docs.driftballoon.com).
+
+## Local Development
+
+```bash
+# Setup
+make install
+
+# Unit tests (no backend required)
+make test
+
+# Integration tests (requires running API)
+make test-integration
+
+# Quickstart smoke test
+DRIFTBALLOON_API_KEY=db_sk_xxx python examples/quickstart.py
+
+# Cross-venv testing from repo root
+make sdk-test-local KEY=db_sk_xxx
+```
 
 ## License
 

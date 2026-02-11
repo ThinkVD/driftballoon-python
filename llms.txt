@@ -1,30 +1,15 @@
 # DriftBalloon SDK
 
-> LLM output drift detection and auto-switching for production AI applications
+> LLM output drift detection and observability for production AI applications
 
 ## Overview
 
-DriftBalloon monitors your LLM outputs and detects when model behavior drifts from baseline. When drift is detected, it can automatically switch to fallback prompts to maintain output quality.
+DriftBalloon monitors your LLM outputs and detects when model behavior drifts from baseline. It stays completely out of your critical path — logging is fire-and-forget, and your app keeps working even if DriftBalloon is unreachable.
 
 ## Installation
 
 ```bash
 pip install driftballoon
-```
-
-With framework wrappers:
-```bash
-pip install "driftballoon[wrappers]"
-```
-
-With CLI tools:
-```bash
-pip install "driftballoon[cli]"
-```
-
-With everything:
-```bash
-pip install "driftballoon[all]"
 ```
 
 ## Quick Start
@@ -33,85 +18,76 @@ pip install "driftballoon[all]"
 from driftballoon import DriftBalloon
 
 db = DriftBalloon(api_key="db_sk_xxx")
-db.register("summarizer", prompt_a="Summarize: {doc}", prompt_b="Brief summary: {doc}")
 
-# After LLM call
-db.log("summarizer", response=llm_response)
+# After each LLM call, log the response (fire-and-forget)
+response = openai.chat.completions.create(model="gpt-4o", messages=[...])
+db.log(
+    name="support-agent",
+    response=response.choices[0].message.content,
+    model="gpt-4o",
+).submit()
 
-# Get active prompt (may have auto-switched)
-prompt = db.get_active_prompt("summarizer")
-```
+# Check which prompt version is active ("a" or "b")
+active = db.get_active_prompt("support-agent")
 
-## Zero-Code Integration
-
-### OpenAI Wrapper
-
-```python
-from driftballoon.wrappers.openai import OpenAI
-
-client = OpenAI(driftballoon_api_key="db_sk_xxx")
-response = client.chat.completions.create(model="gpt-4", messages=[...])
-# Automatically logged for drift detection
-```
-
-### Anthropic Wrapper
-
-```python
-from driftballoon.wrappers.anthropic import Anthropic
-
-client = Anthropic(driftballoon_api_key="db_sk_xxx")
-response = client.messages.create(model="claude-3-opus-20240229", messages=[...])
-```
-
-### LangChain Callback
-
-```python
-from driftballoon.wrappers.langchain import DriftBalloonCallbackHandler
-
-handler = DriftBalloonCallbackHandler(api_key="db_sk_xxx")
-llm = ChatOpenAI(callbacks=[handler])
-```
-
-## CLI Tools
-
-```bash
-# Scan codebase for LLM calls
-driftballoon scan /path/to/project
-
-# Show help
-driftballoon --help
+# Check if baseline is ready
+status, count = db.get_baseline_status("support-agent")
 ```
 
 ## API Reference
 
-### DriftBalloon(api_key, base_url=None, sync_interval=30.0)
+### DriftBalloon(api_key, base_url=None, sync_interval=30.0, auto_start=True)
 
-Main client class.
+Main client class. Can be used as a context manager.
 
-### register(name, prompt_a, prompt_b=None)
+- `api_key`: Your DriftBalloon API key (starts with `db_sk_`)
+- `base_url`: API base URL (defaults to `https://api.driftballoon.com`)
+- `sync_interval`: Config sync interval in seconds (default 30)
+- `auto_start`: Start background sync automatically (default True)
 
-Register a prompt for drift monitoring.
+### log(name, response, prompt=None, model=None) -> LogTask
 
-### log(prompt_name, response, prompt=None, model=None)
+Log an LLM response for drift detection. Returns a `LogTask`.
 
-Log an LLM response (fire-and-forget).
+- `.submit()` — fire-and-forget (non-blocking, queued for background submission)
+- `.invoke()` — synchronous (blocks until the server confirms receipt)
 
-### get_active_prompt(name)
+### get_active_prompt(name) -> "a" | "b" | None
 
-Get currently active prompt template.
+Get the currently active prompt version from cached config.
 
-### get_baseline_status(name)
+### get_config(name) -> PromptConfig | None
 
-Returns (status, sample_count) - baseline needs ~30 samples.
+Get the full prompt configuration from the local cache.
+
+### get_baseline_status(name) -> (status, count)
+
+Check if the baseline is ready (`"learning"` or `"ready"`) and how many samples have been collected. Baseline needs ~30 samples.
+
+### start()
+
+Start the background sync thread (called automatically when `auto_start=True`).
+
+### stop()
+
+Stop background sync and flush remaining queued logs.
 
 ## Features
 
-- Semantic drift detection
-- Length drift detection
-- Auto-switch to fallback prompts
-- Local-first caching (30s sync)
-- Fire-and-forget logging
-- Offline resilience
+- **Semantic drift detection** — detects when LLM responses shift meaning or topic
+- **Length drift detection** — catches abnormally short or long responses
+- **Fire-and-forget logging** — `log().submit()` is non-blocking; your app never waits on DriftBalloon
+- **Prompt status tracking** — check which prompt version is active via `get_active_prompt()`
+- **Local config cache** — prompt configs are cached and synced every 30s
+- **Offline resilience** — your app keeps working if DriftBalloon is unreachable
+- **Retry with backoff** — failed log submissions are retried automatically
+
+## Environment Variables
+
+```bash
+DRIFTBALLOON_API_KEY=db_sk_xxx
+DRIFTBALLOON_BASE_URL=https://api.driftballoon.com  # optional
+```
 
 ## Links
 
