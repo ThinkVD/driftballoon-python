@@ -1,8 +1,7 @@
 """Tests for DriftBalloon SDK client."""
 
 import pytest
-import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import httpx
 import respx

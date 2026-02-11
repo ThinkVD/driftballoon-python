@@ -1,4 +1,4 @@
-.PHONY: install test test-integration test-all lint format build clean publish-check publish-test publish help
+.PHONY: install test test-integration test-all lint format ci build clean publish-check publish-test publish help
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -27,6 +27,8 @@ lint: ## Lint with ruff
 
 format: ## Format with ruff
 	$(RUFF) format .
+
+ci: lint test ## Run lint + test (mirrors CI)
 
 build: clean ## Build sdist and wheel
 	$(PYTHON) -m build
