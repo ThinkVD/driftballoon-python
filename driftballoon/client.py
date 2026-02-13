@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import atexit
 import threading
 import time
 import logging
@@ -136,10 +137,14 @@ class DriftBalloon:
         self._running = True
         self._sync_thread = threading.Thread(target=self._background_worker, daemon=True)
         self._sync_thread.start()
+        atexit.register(self.stop)
         logger.debug("DriftBalloon background sync started")
 
     def stop(self):
         """Stop background sync and flush remaining logs."""
+        if not self._running and not self._log_queue:
+            return
+
         self._running = False
         if self._sync_thread:
             self._sync_thread.join(timeout=5.0)
