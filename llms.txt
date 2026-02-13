@@ -41,11 +41,11 @@ status, count = db.get_baseline_status("support-agent")
 Main client class. Can be used as a context manager.
 
 - `api_key`: Your DriftBalloon API key (starts with `db_sk_`)
-- `base_url`: API base URL (defaults to `https://api.driftballoon.com`)
+- `base_url`: API base URL (defaults to `https://server.driftballoon.com`)
 - `sync_interval`: Config sync interval in seconds (default 30)
 - `auto_start`: Start background sync automatically (default True)
 
-### log(name, response, prompt=None, model=None) -> LogTask
+### log(name, response, prompt, model) -> LogTask
 
 Log an LLM response for drift detection. Returns a `LogTask`.
 
@@ -86,7 +86,7 @@ Stop background sync and flush remaining queued logs.
 
 ```bash
 DRIFTBALLOON_API_KEY=db_sk_xxx
-DRIFTBALLOON_BASE_URL=https://api.driftballoon.com  # optional
+DRIFTBALLOON_BASE_URL=https://server.driftballoon.com  # optional
 ```
 
 ## Links

@@ -75,7 +75,7 @@ class DriftBalloon:
         active = db.get_active_prompt("summarizer")
     """
 
-    DEFAULT_BASE_URL = "https://api.driftballoon.com"
+    DEFAULT_BASE_URL = "https://server.driftballoon.com"
 
     def __init__(
         self,
@@ -89,7 +89,7 @@ class DriftBalloon:
 
         Args:
             api_key: Your DriftBalloon API key (starts with db_sk_)
-            base_url: API base URL (defaults to https://api.driftballoon.com)
+            base_url: API base URL (defaults to https://server.driftballoon.com)
             sync_interval: Config sync interval in seconds (default 30)
             auto_start: Start background sync automatically (default True)
         """
@@ -153,8 +153,8 @@ class DriftBalloon:
         self,
         name: str,
         response: str,
-        prompt: str | None = None,
-        model: str | None = None,
+        prompt: str,
+        model: str,
     ) -> LogTask:
         """
         Log an LLM response for drift detection.
@@ -165,8 +165,8 @@ class DriftBalloon:
         Args:
             name: Name of the prompt
             response: The LLM response text
-            prompt: The input prompt (optional, for reference)
-            model: The LLM model used (optional)
+            prompt: The input prompt sent to the LLM
+            model: The LLM model used
 
         Returns:
             LogTask with .invoke() and .submit() methods

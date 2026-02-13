@@ -54,7 +54,7 @@ class TestLog:
         """Test that log() returns a LogTask."""
         db = DriftBalloon(api_key="db_sk_test1234567890ab", auto_start=False)
 
-        task = db.log(name="test-prompt", response="Test response")
+        task = db.log(name="test-prompt", response="Test response", prompt="Test input", model="gpt-4")
 
         assert isinstance(task, LogTask)
         assert len(db._log_queue) == 0  # Not queued until .submit()
@@ -75,21 +75,21 @@ class TestLog:
         """Test submitting multiple entries."""
         db = DriftBalloon(api_key="db_sk_test1234567890ab", auto_start=False)
 
-        db.log(name="prompt1", response="Response 1").submit()
-        db.log(name="prompt2", response="Response 2").submit()
-        db.log(name="prompt1", response="Response 3").submit()
+        db.log(name="prompt1", response="Response 1", prompt="Input 1", model="gpt-4").submit()
+        db.log(name="prompt2", response="Response 2", prompt="Input 2", model="gpt-4").submit()
+        db.log(name="prompt1", response="Response 3", prompt="Input 3", model="gpt-4").submit()
 
         assert len(db._log_queue) == 3
 
     @respx.mock
     def test_invoke_sends_synchronously(self, respx_mock):
         """Test that .invoke() sends the log synchronously."""
-        route = respx_mock.post("https://api.driftballoon.com/api/v1/logs").mock(
+        route = respx_mock.post("https://server.driftballoon.com/api/v1/logs").mock(
             return_value=httpx.Response(202, json={"status": "accepted", "count": 1})
         )
 
         db = DriftBalloon(api_key="db_sk_test1234567890ab", auto_start=False)
-        db.log(name="test-prompt", response="Sync response", prompt="Sync input").invoke()
+        db.log(name="test-prompt", response="Sync response", prompt="Sync input", model="gpt-4").invoke()
 
         assert route.called
         assert len(db._log_queue) == 0  # Not queued — sent directly
@@ -172,7 +172,7 @@ class TestConfigSync:
     @respx.mock
     def test_sync_config_updates_cache(self, respx_mock):
         """Test that _sync_config updates local cache."""
-        respx_mock.get("https://api.driftballoon.com/api/v1/config").mock(
+        respx_mock.get("https://server.driftballoon.com/api/v1/config").mock(
             return_value=httpx.Response(200, json={
                 "prompts": {
                     "test-prompt": {
@@ -206,7 +206,7 @@ class TestConfigSync:
     @respx.mock
     def test_sync_config_adds_new_prompts(self, respx_mock):
         """Test that _sync_config adds new prompts to cache."""
-        respx_mock.get("https://api.driftballoon.com/api/v1/config").mock(
+        respx_mock.get("https://server.driftballoon.com/api/v1/config").mock(
             return_value=httpx.Response(200, json={
                 "prompts": {
                     "new-prompt": {
@@ -237,7 +237,7 @@ class TestConfigSync:
     @respx.mock
     def test_sync_config_handles_server_error(self, respx_mock):
         """Test that _sync_config handles server errors gracefully."""
-        respx_mock.get("https://api.driftballoon.com/api/v1/config").mock(
+        respx_mock.get("https://server.driftballoon.com/api/v1/config").mock(
             return_value=httpx.Response(500)
         )
 
@@ -260,7 +260,7 @@ class TestFlushLogs:
     @respx.mock
     def test_flush_logs_sends_batch(self, respx_mock):
         """Test that _flush_logs sends queued logs."""
-        respx_mock.post("https://api.driftballoon.com/api/v1/logs").mock(
+        respx_mock.post("https://server.driftballoon.com/api/v1/logs").mock(
             return_value=httpx.Response(202, json={
                 "status": "accepted",
                 "count": 2,
@@ -281,7 +281,7 @@ class TestFlushLogs:
     @respx.mock
     def test_flush_logs_requeues_on_rate_limit(self, respx_mock):
         """Test that _flush_logs requeues on 429."""
-        respx_mock.post("https://api.driftballoon.com/api/v1/logs").mock(
+        respx_mock.post("https://server.driftballoon.com/api/v1/logs").mock(
             return_value=httpx.Response(429, json={"error": "Rate limited"})
         )
 
@@ -298,7 +298,7 @@ class TestFlushLogs:
     @respx.mock
     def test_flush_logs_retries_and_drops(self, respx_mock):
         """Test that _flush_logs retries up to max_retries then drops."""
-        respx_mock.post("https://api.driftballoon.com/api/v1/logs").mock(
+        respx_mock.post("https://server.driftballoon.com/api/v1/logs").mock(
             return_value=httpx.Response(500)
         )
 

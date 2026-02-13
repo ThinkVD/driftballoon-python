@@ -25,7 +25,7 @@ response = openai.chat.completions.create(
     model="gpt-4",
     messages=[{"role": "user", "content": user_input}]
 )
-db.log(name="my-prompt", response=response.choices[0].message.content, model="gpt-4").submit()
+db.log(name="my-prompt", response=response.choices[0].message.content, prompt=user_input, model="gpt-4").submit()
 
 # Optionally check which prompt version is active ("a" or "b")
 active = db.get_active_prompt("my-prompt")
@@ -57,7 +57,7 @@ print(f"Baseline: {status}, samples: {count}")
 
 ```bash
 DRIFTBALLOON_API_KEY=db_sk_xxx
-DRIFTBALLOON_BASE_URL=https://api.driftballoon.com  # optional
+DRIFTBALLOON_BASE_URL=https://server.driftballoon.com  # optional
 ```
 
 ## Common Integration Locations
@@ -80,7 +80,7 @@ When integrating DriftBalloon, look for:
 
 ### "Logs not appearing"
 - Verify API key starts with `db_sk_`
-- Check network access to api.driftballoon.com
+- Check network access to server.driftballoon.com
 - Logs are async; wait 10-30 seconds
 
 ### "Drift not detected"
